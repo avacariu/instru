@@ -20,22 +20,34 @@ instru_eval_frame(PyFrameObject *frame, int throwflag)
 PyObject *
 instru_attach(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-    char *output_filename;
     const char *keywords[] = {"logfile", NULL};
 
-    // TODO: use PyUnicode_FSConverter() to handle paths properly
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", keywords,
-                &output_filename)) {
-        return NULL;
+    PyBytesObject* output_path = PyObject_New(PyBytesObject, &PyBytes_Type);
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&", keywords,
+                PyUnicode_FSConverter, &output_path)) {
+        goto fail;
     }
 
-    output_file = fopen(output_filename, "a");
+    char *filename = PyBytes_AsString(output_path);
+
+    if (filename == NULL) {
+        goto fail;
+    }
+
+    output_file = fopen(filename, "a");
 
     counter = 0;
     PyThreadState *tstate = PyThreadState_GET();
     tstate->interp->eval_frame = instru_eval_frame;
 
     Py_RETURN_NONE;
+
+fail:
+    Py_XDECREF(output_path);
+
+    // we're assuming some exception was already set
+    return NULL;
 }
 
 PyObject *
