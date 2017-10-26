@@ -2,8 +2,8 @@
 #include <frameobject.h>
 #include <stdio.h>
 
-static int counter;
-static FILE *output_file;
+static int counter = 0;
+static FILE *output_file = NULL;
 
 PyObject *
 instru_eval_frame(PyFrameObject *frame, int throwflag)
