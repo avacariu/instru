@@ -1,9 +1,52 @@
 #include <Python.h>
 #include <frameobject.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 static int counter = 0;
 static FILE *output_file = NULL;
+static Py_ssize_t co_extra_index = -1;
+
+void *
+co_extra_counter_free(void *extra)
+{
+    free(extra);
+
+    return NULL;
+}
+
+int
+incr_func_counter(PyCodeObject *code)
+{
+    // TODO: check for errors
+    Py_ssize_t *extra;
+
+    _PyCode_GetExtra((PyObject *) code, co_extra_index, (void **) &extra);
+
+    if (extra == NULL) {
+        extra = calloc(1, sizeof(Py_ssize_t));
+
+        _PyCode_SetExtra((PyObject *) code, co_extra_index, extra);
+    }
+
+    (*extra)++;
+
+    return 0;
+}
+
+Py_ssize_t
+get_func_counter(PyCodeObject *code)
+{
+    Py_ssize_t *extra;
+
+    _PyCode_GetExtra((PyObject *) code, co_extra_index, &extra);
+
+    if (extra == NULL) {
+        return 0;
+    }
+
+    return *extra;
+}
 
 PyObject *
 instru_eval_frame(PyFrameObject *frame, int throwflag)
@@ -11,7 +54,11 @@ instru_eval_frame(PyFrameObject *frame, int throwflag)
     const char *filename = _PyUnicode_AsString(frame->f_code->co_filename);
     const char *name = _PyUnicode_AsString(frame->f_code->co_name);
 
-    fprintf(output_file, "Function: %s:%s\n", filename, name);
+    // TODO: do this by name in some external dict instead
+    incr_func_counter(frame->f_code);
+
+    fprintf(output_file, "Function: %s:%s:%d\n", filename, name,
+            get_func_counter(frame->f_code));
     counter++;
 
     return _PyEval_EvalFrameDefault(frame, throwflag);
@@ -37,6 +84,10 @@ instru_attach(PyObject *self, PyObject *args, PyObject *kwargs)
 
     output_file = fopen(filename, "a");
 
+    if (co_extra_index == -1) {
+        co_extra_index = _PyEval_RequestCodeExtraIndex(co_extra_counter_free);
+    }
+
     counter = 0;
     PyThreadState *tstate = PyThreadState_GET();
     tstate->interp->eval_frame = instru_eval_frame;
@@ -55,6 +106,8 @@ instru_detach(PyObject *self, PyObject *args)
 {
     // TODO raise exception if this is called without attach having been
     // called.
+
+    co_extra_index = -1;
 
     PyThreadState *tstate = PyThreadState_GET();
     tstate->interp->eval_frame = _PyEval_EvalFrameDefault;
