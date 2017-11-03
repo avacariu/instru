@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "cfg.h"
+#include "utils.h"
+
 static int counter = 0;
 static FILE *output_file = NULL;
 static Py_ssize_t co_extra_index = -1;
@@ -59,7 +62,9 @@ instru_eval_frame(PyFrameObject *frame, int throwflag)
 
     fprintf(output_file, "Function: %s:%s:%d\n", filename, name,
             get_func_counter(frame->f_code));
-    counter++;
+
+    // Useless, but it's more of a demo
+    incr_counter(&counter);
 
     return _PyEval_EvalFrameDefault(frame, throwflag);
 }
