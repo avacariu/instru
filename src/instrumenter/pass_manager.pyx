@@ -1,9 +1,17 @@
-from frame_eval cimport (PyThreadState_Get, PyObject, PyFrameObject,
-                         PyThreadState, _PyEval_EvalFrameDefault)
+from libc.stdio cimport printf
+
+from .frame_eval cimport (PyThreadState_Get, PyObject, PyFrameObject,
+                          PyThreadState, _PyEval_EvalFrameDefault)
+from .cfg cimport CFG
 
 
-cdef PyObject *eval_frame(PyFrameObject *frame, int throwflag):
-    return _PyEval_EvalFrameDefault(frame, throwflag)
+cdef PyObject *eval_frame(PyFrameObject *frame_obj, int throwflag):
+    frame = <object> frame_obj
+    cdef str filename = frame.f_code.co_filename
+
+    frame_cfg = CFG(<object> frame_obj.f_code)
+
+    return _PyEval_EvalFrameDefault(frame_obj, throwflag)
 
 
 cpdef attach():

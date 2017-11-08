@@ -10,5 +10,8 @@ setup(
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
 
-    ext_modules=cythonize('src/instrumenter/*.pyx'),
+    ext_modules=cythonize('src/instrumenter/*.pyx',
+                          compiler_directives={
+                              'language_level': 3,
+                          }),
 )
