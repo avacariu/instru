@@ -11,6 +11,9 @@ cdef bint should_instrument(filename):
             return False
 
     # TODO: figure out why this happens
+    # Maybe it's because the specified line
+    # File "/home/av/.pyenv/versions/3.6.2/lib/python3.6/dis.py", line 328 in _get_instructions_bytes
+    # Creates a new namedtuple which is technically built from a string
     if filename == '<string>':
         return False
 
