@@ -23,6 +23,7 @@ cdef extern from *:
         PyObject *co_weakreflist;   # to support weakrefs to code objects */
         void *co_extra;
 
+
 cdef extern from "frameobject.h":
     ctypedef struct PyFrameObject:
         PyCodeObject *f_code       # code segment
@@ -42,6 +43,10 @@ cdef extern from "frameobject.h":
         int f_iblock;               #/* index in f_blockstack */
         char f_executing;           #/* whether the frame is still executing */
         PyObject *f_localsplus[1];
+
+    PyFrameObject * PyFrame_New(PyThreadState *, PyCodeObject *,
+                                PyObject *, PyObject *)
+    void PyFrame_LocalsToFast(PyFrameObject *f, int clear)
 
 cdef extern from "code.h":
     int _PyCode_GetExtra(PyObject *code, Py_ssize_t index, void **extra)
