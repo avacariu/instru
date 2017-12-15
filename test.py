@@ -1,7 +1,9 @@
+import dis
+import random
+from pprint import pprint
+
 import instrumenter
 import pycfg
-import dis
-from pprint import pprint
 
 
 def pathprof(f):
@@ -42,15 +44,73 @@ def f3(x):
     return None
 
 
-def test(f, num_paths, test_values, check_all_paths=False):
+@pathprof
+def f4(x):
+    if x % 2 == 0:
+        print
+    if x % 3 == 0:
+        print
+    if x % 5 == 0:
+        print
+    if x % 7 == 0:
+        print
+    if x % 11 == 0:
+        print
+    if x % 13 == 0:
+        print
+    if x % 17 == 0:
+        print
+    if x % 19 == 0:
+        print
+    if x % 23 == 0:
+        print
+    if x % 29 == 0:
+        print
+    if x % 31 == 0:
+        print
+    if x % 37 == 0:
+        print
+    if x % 41 == 0:
+        print
+    if x % 43 == 0:
+        print
+    if x % 47 == 0:
+        print
+    if x % 53 == 0:
+        print
+    if x % 59 == 0:
+        print
+    if x % 61 == 0:
+        print
+    if x % 67 == 0:
+        print
+    if x % 71 == 0:
+        print
+    if x % 73 == 0:
+        print
+    if x % 79 == 0:
+        print
+    if x % 83 == 0:
+        print
+    if x % 89 == 0:
+        print
+    if x % 97 == 0:
+        print
+
+
+def test(f, num_paths, test_values, check_all_paths=False, sample=0):
     c = pycfg.CFG(f)
     ev = instrumenter.path_profiler.assign_values_to_edges(c)
 
-    for path in range(num_paths):
+    all_paths = range(num_paths)
+
+    if sample:
+        all_paths = random.sample(all_paths, k=sample)
+
+    for path in all_paths:
         print(f"\nPATH {path}")
         pprint(instrumenter.path_profiler.recover_path(c, ev, path))
 
-    expected_paths = set(range(num_paths))
     executed_paths = set()
 
     for i in test_values:
@@ -58,7 +118,7 @@ def test(f, num_paths, test_values, check_all_paths=False):
 
         path = f.__globals__['X-instru_counter']
 
-        if path not in expected_paths:
+        if not (0 <= path < num_paths):
             raise Exception(f"Unexpected path {path} for input {i}")
 
         executed_paths.add(path)
@@ -67,18 +127,16 @@ def test(f, num_paths, test_values, check_all_paths=False):
         print('-'*80)
 
     if check_all_paths:
-        missing_paths = expected_paths - executed_paths
-        if missing_paths:
-            print("Missed some paths:", missing_paths)
-        else:
-            print("All paths found")
+        missing_paths = set(range(num_paths)) - executed_paths
+        assert len(missing_paths) == 0, f"Missed some paths: {missing_paths}"
 
     print('='*80)
 
 
 test(f1, 2, [4, 6])
 test(f2, 2, [4, 6])
-test(f3, 8, range(-10, 20), check_all_paths=True)
+test(f3, 8, [1, 2, 3, 5, 6, 10, 15, 30], check_all_paths=True)
+test(f4, 2**25, [1, 2, 3], sample=1000)
 
 
 instrumenter.detach()
