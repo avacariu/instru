@@ -134,9 +134,8 @@ cdef PyObject *eval_frame(PyFrameObject *frame_obj, int throwflag):
 
                 code_to_insert.append((edge[1], new_code, edge_val))
 
-
         new_co_code = path_profiler.instrument(frame.f_code.co_code,
-                                               code_to_insert,
+                                               reversed(code_to_insert),
                                                incr_code_size,
                                                edge_values)
 
@@ -157,9 +156,6 @@ cdef PyObject *eval_frame(PyFrameObject *frame_obj, int throwflag):
             frame.f_code.co_freevars,
             frame.f_code.co_cellvars
         )
-
-        print("\nNEW CODE")
-        dis.dis(new_code)
 
         # This seems neessary or else .f_locals on the new frame object will be
         # empty
